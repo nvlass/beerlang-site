@@ -1,5 +1,5 @@
 {:title "Beerlang"
- :layout :home
+ :layout :main
  :page-index 0
  :navbar? false
  :home? true}

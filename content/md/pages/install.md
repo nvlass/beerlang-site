@@ -1,7 +1,8 @@
 {:title "Install"
  :layout :page
  :page-index 1
- :navbar? true}
+ :navbar? true
+ :description "Install Beerlang — build from source on Linux or macOS."}
 
 ## Installing Beerlang
 

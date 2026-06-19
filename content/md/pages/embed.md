@@ -243,20 +243,57 @@ won't be registered.
 (ffi/close libc)
 ```
 
-### What's coming (Phase 2)
+### Higher-level macros
 
-The `def-cfn` and `def-cstruct` macros will make working with C libraries
-feel natural:
+`beer.ffi` provides macros that make working with C libraries feel natural.
+Require `beer.ffi` and use the qualified forms:
 
 ```clojure
-;; Phase 2 preview — not yet available
-(def-cfn sqrt "libm" "sqrt" [:double] :double)
+(ns myscript
+  (:require [beer.ffi :as ffi]))
+
+;; Bind a C function by name
+(ffi/def-cfn sqrt "m" "sqrt" [:double] :double)
 
 (sqrt 2.0)   ;=> 1.41421...
 
-(def-cstruct Point [x :double] [y :double])
-(def p (ffi/malloc Point))
+;; Define a struct layout (sizes and offsets from beer-probe)
+(ffi/def-cstruct Point {:size 16
+                        :fields [{:name :x :type :double :offset 0}
+                                 {:name :y :type :double :offset 8}]})
+
+;; Generate getter/setter/alloc/size helpers
+(ffi/def-cstruct-accessors Point)
+
+(def p (point-alloc))     ; ffi/malloc'd, zeroed
 (set-point-x! p 3.0)
 (set-point-y! p 4.0)
 (point-x p)   ;=> 3.0
+(point-size)  ;=> 16
+(ffi/free p)
 ```
+
+### Binding files and `load-bindings`
+
+For libraries you use regularly, generate a binding file once with `beer-probe`
+and load it at the top of your script:
+
+```bash
+# Generate (run once per library / platform)
+beer-probe my-lib-spec.beer bindings/mylib.beer
+```
+
+```clojure
+(ns myscript
+  (:require [beer.ffi :as ffi]))
+
+;; Load all fns and structs from the binding file
+(def mylib (read-string (slurp "bindings/mylib.beer")))
+(ffi/load-bindings mylib)
+
+;; Functions and struct accessors are now defined in the current namespace
+```
+
+The binding file is a plain beerlang data map with `:meta`, `:fns`, and
+`:structs` (keyed by ABI string, e.g. `"x86_64-darwin"`), so it can contain
+layouts for multiple platforms in one file.

@@ -1,6 +1,6 @@
 {:title "About"
  :layout :page
- :page-index 5
+ :page-index 6
  :navbar? true}
 
 ## About Beerlang
